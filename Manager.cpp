@@ -6,7 +6,7 @@
 
 #include "Robot.h"
 //初始化静态成员变量
-std::vector<std::shared_ptr<ROBOT>> Manager::robot;
+std::vector<std::shared_ptr<Robot>> Manager::robot;
 
 void Manager::read() {
   //使用last_time记录时间差
@@ -36,23 +36,24 @@ void Manager::preprocess(int time) {
   for (auto i = 0; i < Manager::robot.size(); i++) {
     auto ptr = Manager::robot[i].get();
     //判断是否死亡
-    if (!ptr->died) {
+    if (!ptr->is_died()) {
       //判断是否超热量
-      if (ptr->HOT > ptr->MAX_HOT) {
+      if (ptr->get_hot() > ptr->get_max_hot()) {
         //判断超出的热量是否大于时间差
-        if (ptr->HOT - ptr->MAX_HOT >= time) {
+        if (ptr->get_hot() - ptr->get_max_hot() >= time) {
           // 扣除时间差的血量和热量
-          ptr->HP -= time;
-          ptr->HOT -= time;
+          ptr->set_hp(ptr->get_hp() - time);
+          ptr->set_hot(ptr->get_hot() - time);
         } else {
           // 扣除超热量差的血量和热量
-          ptr->HP -= ptr->HOT - ptr->MAX_HOT;
-          ptr->HOT -= ptr->HOT - ptr->MAX_HOT;
+          ptr->set_hp(ptr->get_hp() - ptr->get_hot() + ptr->get_max_hot());
+          ptr->set_hot(ptr->get_max_hot());
         }
         // 判断是否因热量超出而死
-        if (ptr->HP <= 0) {
-          ptr->died = true;
-          std::cout << "D " << ptr->TEAM << " " << ptr->ID << std::endl;
+        if (ptr->get_hp() <= 0) {
+          ptr->set_died(true);
+          std::cout << "D " << ptr->get_team() << " " << ptr->get_id()
+                    << std::endl;
         }
       }
     }
@@ -63,13 +64,14 @@ void Manager::add(int team, int id, int type) {
   for (auto i = 0; i < Manager::robot.size(); i++) {
     auto ptr = Manager::robot[i].get();
     //判断ID、团队、类型是否完全符合
-    if (ptr->ID == id && ptr->TEAM == team && ptr->TYPE == type) {
+    if (ptr->get_id() == id && ptr->get_team() == team &&
+        ptr->get_type() == type) {
       //判断是否死亡
-      if (ptr->died) {
+      if (ptr->is_died()) {
         // 将属性值复活
-        ptr->HP = ptr->MAX_HP;
-        ptr->HOT = 0;
-        ptr->died = false;
+        ptr->set_hp(ptr->get_max_hp());
+        ptr->set_hot(0);
+        ptr->set_died(false);
       }
       return;
     }
@@ -78,13 +80,13 @@ void Manager::add(int team, int id, int type) {
   //新建步兵机器人
   if (type == 0) {
     std::shared_ptr<Infantry> infantry = std::make_shared<Infantry>(team, id);
-    Manager::robot.push_back(std::shared_ptr<ROBOT>(infantry));
+    Manager::robot.push_back(std::shared_ptr<Robot>(infantry));
 
   }
   //新建工程机器人
   else if (type == 1) {
     std::shared_ptr<Engineer> engineer = std::make_shared<Engineer>(team, id);
-    Manager::robot.push_back(std::shared_ptr<ROBOT>(engineer));
+    Manager::robot.push_back(std::shared_ptr<Robot>(engineer));
   }
 }
 void Manager::hurt(int team, int id, int atk) {
@@ -92,12 +94,13 @@ void Manager::hurt(int team, int id, int atk) {
   for (auto i = 0; i < Manager::robot.size(); i++) {
     auto ptr = Manager::robot[i].get();
     //判断ID、团队是否符合 以及是否存活
-    if (ptr->ID == id && ptr->TEAM == team && !ptr->died) {
-      ptr->HP -= atk;
+    if (ptr->get_id() == id && ptr->get_team() == team && !ptr->is_died()) {
+      ptr->set_hp(ptr->get_hp() - atk);
       //判断是否被打死了
-      if (ptr->HP <= 0) {
-        ptr->died = true;
-        std::cout << "D " << ptr->TEAM << " " << ptr->ID << std::endl;
+      if (ptr->get_hp() <= 0) {
+        ptr->set_died(true);
+        std::cout << "D " << ptr->get_team() << " " << ptr->get_id()
+                  << std::endl;
       }
       return;
     }
@@ -108,9 +111,9 @@ void Manager::heat(int team, int id, int hot) {
   for (auto i = 0; i < Manager::robot.size(); i++) {
     auto ptr = Manager::robot[i].get();
     //判断ID、团队是否符合 以及是否存活
-    if (ptr->ID == id && ptr->TEAM == team && !ptr->died) {
+    if (ptr->get_id() == id && ptr->get_team() == team && !ptr->is_died()) {
       //判断是否为步兵
-      if (ptr->TYPE == 0) ptr->HOT += hot;
+      if (ptr->get_type() == 0) ptr->set_hot(ptr->get_hot() + hot);
       return;
     }
   }
@@ -120,22 +123,12 @@ void Manager::up(int team, int id, int lv) {
   for (auto i = 0; i < Manager::robot.size(); i++) {
     auto ptr = Manager::robot[i].get();
     //判断ID、团队是否符合 以及是否存活
-    if (ptr->ID == id && ptr->TEAM == team && !ptr->died) {
+    if (ptr->get_id() == id && ptr->get_team() == team && !ptr->is_died()) {
       // 判断是否为步兵
-      if (ptr->TYPE == 0) {
+      if (ptr->get_type() == 0) {
         // 判断目标等级是否大于步兵等级
-        if (ptr->level < lv) {
-          ptr->level = lv;
-          // 若等级为2，则升为二级步兵
-          if (lv == 2) {
-            ptr->MAX_HOT = 200;
-            ptr->MAX_HP = 150;
-          }
-          // 若等级为3，则升为三级步兵
-          else if (lv == 3) {
-            ptr->MAX_HOT = 300;
-            ptr->MAX_HP = 250;
-          }
+        if (ptr->get_level() < lv) {
+          ptr->set_level(lv);
         }
       }
       return;

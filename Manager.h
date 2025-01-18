@@ -6,7 +6,7 @@
 #define MANAGER_H
 class Manager {
  public:
-  static std::vector<std::shared_ptr<ROBOT>> robot;
+  static std::vector<std::shared_ptr<Robot>> robot;
   // #读取指令
   static void read();
   // #根据时间变化处理机器人热量
