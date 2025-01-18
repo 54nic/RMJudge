@@ -10,23 +10,24 @@ class Manager {
   // #读取指令
   static void read();
   // #根据时间变化处理机器人热量
+  // @time    时间差
   static void preprocess(int time);
-  // #A命令   新增一个机器人
+  // #A命令：新增一个机器人
   // @team    团队
   // @id      机器人标识符
   // @type    机器人类型
   static void add(int team, int id, int type);
-  // #F命令   对一个机器人造成伤害
+  // #F命令：对一个机器人造成伤害
   // @team    团队
   // @id      机器人标识符
   // @atk     造成的伤害数值
   static void hurt(int team, int id, int atk);
-  // #H命令   把一个机器人的热量上升指定值
+  // #H命令：把一个机器人的热量上升指定值
   // @team    团队
   // @id      机器人标识符
   // @atk     热量指定值
   static void heat(int team, int id, int hot);
-  // #U命令   将一个机器人上升到该等级
+  // #U命令：将一个机器人上升到该等级
   // @team    团队
   // @id      机器人标识符
   // @lv      等级指定值
